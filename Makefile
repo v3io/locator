@@ -1,15 +1,12 @@
-GO_BUILD=GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags="-s -w"
-RELEASE_VERSION = "2.0.0"
-DOCKER_HUB_USER = "iguaziodocker"
+LOCATOR_TAG = 2.0.0
 
-all: lint bin image
+.PHONY: all
+all: lint image
 	@echo Done.
 
-bin: ensure-gopath
-	$(GO_BUILD) -o locatorctl cmd/locatorctl/main.go
-
-image:
-	docker build --rm --tag $(DOCKER_HUB_USER)/locator:$(RELEASE_VERSION) .
+.PHONY: build
+build:
+	docker build --tag=locator:$(LOCATOR_TAG) .
 
 .PHONY: lint
 lint: ensure-gopath
@@ -55,7 +52,7 @@ test:
 	go test -v ./pkg/...
 
 .PHONY: ensure-gopath
-check-gopath:
+ensure-gopath:
 ifndef GOPATH
-    $(error GOPATH must be set)
+	$(error GOPATH must be set)
 endif
