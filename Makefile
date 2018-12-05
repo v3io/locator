@@ -1,7 +1,7 @@
 LOCATOR_TAG = 2.0.0
 
 .PHONY: all
-all: lint image
+all: lint build
 	@echo Done.
 
 .PHONY: build
