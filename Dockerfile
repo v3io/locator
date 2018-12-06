@@ -17,4 +17,4 @@ EXPOSE 8080
 
 COPY --from=builder /go/bin/locatorctl /usr/local/bin/locatorctl
 
-CMD [ "locatorctl" ]
+CMD [ "locatorctl" 
