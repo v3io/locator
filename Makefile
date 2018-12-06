@@ -6,7 +6,11 @@ all: lint build
 
 .PHONY: build
 build:
-	docker build --tag=locator:$(LOCATOR_TAG) .
+	docker build --tag=$(LOCATOR_REPOSITORY)locator:$(LOCATOR_TAG) .
+
+.PHONY: ensure-gopath bin
+bin:
+	CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags="-s -w" -o $(GOPATH)/bin/locatorctl $(GOPATH)/src/github.com/v3io/locator/cmd/locatorctl/main.go
 
 .PHONY: lint
 lint: ensure-gopath

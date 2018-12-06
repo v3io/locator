@@ -1,10 +1,10 @@
-FROM golang:1.10 as builder
+FROM golang:1.11 as builder
 
 # copy sources
 ADD . /go/src/github.com/v3io/locator
 
 # build the locator
-RuN CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags="-s -w" -o /go/bin/locatorctl src/github.com/v3io/locator/cmd/locatorctl/main.go
+RUN make -C /go/src/github.com/v3io/locator bin
 
 FROM debian:stretch-slim
 
