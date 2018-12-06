@@ -1,4 +1,7 @@
+LOCATOR_PATH = src/github.com/v3io/locator
 LOCATOR_TAG = 2.0.0
+LOCATOR_REPOSITORY = v3io/
+LOCATOR_BUILD_COMMAND = CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags="-s -w" -o $(GOPATH)/bin/locatorctl $(GOPATH)/$(LOCATOR_PATH)/cmd/locatorctl/main.go
 
 .PHONY: all
 all: lint build
@@ -10,7 +13,7 @@ build:
 
 .PHONY: ensure-gopath bin
 bin:
-	CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags="-s -w" -o $(GOPATH)/bin/locatorctl $(GOPATH)/src/github.com/v3io/locator/cmd/locatorctl/main.go
+	$(LOCATOR_BUILD_COMMAND)
 
 .PHONY: lint
 lint: ensure-gopath
