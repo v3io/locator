@@ -1,0 +1,18 @@
+FROM golang:1.10 as builder
+ADD ./ /go/src/github.com/v3io/locator
+WORKDIR /go/src/github.com/v3io/locator
+RUN make bin
+#RUN make image
+
+FROM debian:stretch-slim
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+EXPOSE 8080
+
+COPY --from=builder /go/src/github.com/v3io/locator/locatorctl /usr/local/bin/locatorctl
+
+CMD [ "locatorctl" ]
