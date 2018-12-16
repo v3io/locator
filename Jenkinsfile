@@ -103,7 +103,7 @@ spec:
                     container('docker-cmd') {
                         sh """
                             cd ${BUILD_FOLDER}/src/github.com/v3io/${git_project}
-                            docker build . --tag ${git_project}:${TAG_VERSION} --tag ${docker_user}/${git_project}:${TAG_VERSION} --tag ${docker_user}/${git_project}:latest --tag quay.io/${quay_user}/${git_project}:${TAG_VERSION} --tag quay.io/${quay_user}/${git_project}:latest --tag ${ARTIFACTORY_URL}/${artifactory_user}/${git_project}:${TAG_VERSION} --tag ${ARTIFACTORY_URL}/${artifactory_user}/${git_project}:latest
+                            docker build . -f Dockerfile.multi --tag ${git_project}:${TAG_VERSION} --tag ${docker_user}/${git_project}:${TAG_VERSION} --tag ${docker_user}/${git_project}:latest --tag quay.io/${quay_user}/${git_project}:${TAG_VERSION} --tag quay.io/${quay_user}/${git_project}:latest --tag ${ARTIFACTORY_URL}/${artifactory_user}/${git_project}:${TAG_VERSION} --tag ${ARTIFACTORY_URL}/${artifactory_user}/${git_project}:latest
                         """
                     }
                 }
