@@ -61,7 +61,6 @@ spec:
                 string(credentialsId: git_deploy_user_token, variable: 'GIT_TOKEN'),
                 string(credentialsId: artifactory_url, variable: 'ARTIFACTORY_URL')
         ]) {
-            def AUTO_TAG
             def TAG_VERSION
 
             stage('get tag data') {
@@ -73,17 +72,11 @@ spec:
 
                     sh "curl -H \"Authorization: token ${GIT_TOKEN}\" https://api.github.com/repos/${git_project_user}/${git_project}/releases/tags/v${TAG_VERSION} > ~/tag_version"
 
-                    AUTO_TAG = sh(
-                            script: "cat ~/tag_version | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[\"body\"]'",
-                            returnStdout: true
-                    ).trim()
-
                     PUBLISHED_BEFORE = sh(
                             script: "tag_published_at=\$(cat ~/tag_version | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[\"published_at\"]'); SECONDS=\$(expr \$(date +%s) - \$(date -d \"\$tag_published_at\" +%s)); expr \$SECONDS / 60 + 1",
                             returnStdout: true
                     ).trim().toInteger()
 
-                    echo "$AUTO_TAG"
                     echo "$TAG_VERSION"
                     echo "$PUBLISHED_BEFORE"
                 }
@@ -142,8 +135,6 @@ spec:
                 stage('warning') {
                     if (PUBLISHED_BEFORE >= expired) {
                         echo "Tag too old, published before $PUBLISHED_BEFORE minutes."
-                    } else if (AUTO_TAG.startsWith("Autorelease")) {
-                        echo "Autorelease does not trigger this job."
                     } else {
                         echo "${TAG_VERSION} is not release tag."
                     }
