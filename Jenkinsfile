@@ -1,19 +1,11 @@
 label = "${UUID.randomUUID().toString()}"
 BUILD_FOLDER = "/go"
 expired=240
-quay_user = "gkirok"
-quay_credentials = "iguazio-dev-quay-credentials"
-docker_user = "gallziguazio"
-docker_credentials = "iguazio-dev-docker-credentials"
-artifactory_user = "gallz"
-artifactory_url = "iguazio-dev-artifactory-url"
-artifactory_credentials = "iguazio-dev-artifactory-credentials"
 git_project = "locator"
 git_project_user = "gkirok"
-git_deploy_user = "iguazio-dev-git-user"
 git_deploy_user_token = "iguazio-dev-git-user-token"
+git_deploy_user_private_key = "iguazio-dev-git-user-private-key"
 
-properties([pipelineTriggers([[$class: 'PeriodicFolderTrigger', interval: '2m']])])
 podTemplate(label: "${git_project}-${label}", yaml: """
 apiVersion: v1
 kind: Pod
@@ -57,33 +49,20 @@ spec:
 ) {
     node("${git_project}-${label}") {
         withCredentials([
-                usernamePassword(credentialsId: git_deploy_user, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME'),
-                string(credentialsId: git_deploy_user_token, variable: 'GIT_TOKEN'),
-                string(credentialsId: artifactory_url, variable: 'ARTIFACTORY_URL')
+                string(credentialsId: git_deploy_user_token, variable: 'GIT_TOKEN')
         ]) {
-            def AUTO_TAG
             def TAG_VERSION
+            pipelinex = library(identifier: 'pipelinex@DEVOPS-204-pipelinex', retriever: modernSCM(
+                    [$class: 'GitSCMSource',
+                     credentialsId: git_deploy_user_private_key,
+                     remote: "git@github.com:iguazio/pipelinex.git"])).com.iguazio.pipelinex
+            multi_credentials=[pipelinex.DockerRepoDev.ARTIFACTORY_IGUAZIO, pipelinex.DockerRepoDev.DOCKER_HUB, pipelinex.DockerRepoDev.QUAY_IO]
 
             stage('get tag data') {
                 container('jnlp') {
-                    TAG_VERSION = sh(
-                            script: "echo ${TAG_NAME} | tr -d '\\n' | egrep '^v[\\.0-9]*.*\$' | sed 's/v//'",
-                            returnStdout: true
-                    ).trim()
+                    TAG_VERSION = github.get_tag_version(TAG_NAME)
+                    PUBLISHED_BEFORE = github.get_tag_published_before(git_project, git_project_user, "v${TAG_VERSION}", GIT_TOKEN)
 
-                    sh "curl -H \"Authorization: token ${GIT_TOKEN}\" https://api.github.com/repos/${git_project_user}/${git_project}/releases/tags/v${TAG_VERSION} > ~/tag_version"
-
-                    AUTO_TAG = sh(
-                            script: "cat ~/tag_version | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[\"body\"]'",
-                            returnStdout: true
-                    ).trim()
-
-                    PUBLISHED_BEFORE = sh(
-                            script: "tag_published_at=\$(cat ~/tag_version | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[\"published_at\"]'); SECONDS=\$(expr \$(date +%s) - \$(date -d \"\$tag_published_at\" +%s)); expr \$SECONDS / 60 + 1",
-                            returnStdout: true
-                    ).trim().toInteger()
-
-                    echo "$AUTO_TAG"
                     echo "$TAG_VERSION"
                     echo "$PUBLISHED_BEFORE"
                 }
@@ -92,58 +71,36 @@ spec:
             if ( TAG_VERSION != null && TAG_VERSION.length() > 0 && PUBLISHED_BEFORE < expired ) {
                 stage('prepare sources') {
                     container('jnlp') {
-                        sh """
-                            cd ${BUILD_FOLDER}
-                            git clone https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${git_project_user}/${git_project}.git src/github.com/v3io/${git_project}
-                        """
-                    }
-                }
-
-                stage('build ${git_project} in dood') {
-                    container('docker-cmd') {
-                        sh """
-                            cd ${BUILD_FOLDER}/src/github.com/v3io/${git_project}
-                            docker build . -f Dockerfile.multi --tag ${git_project}:${TAG_VERSION} --tag ${docker_user}/${git_project}:${TAG_VERSION} --tag ${docker_user}/${git_project}:latest --tag quay.io/${quay_user}/${git_project}:${TAG_VERSION} --tag quay.io/${quay_user}/${git_project}:latest --tag ${ARTIFACTORY_URL}/${artifactory_user}/${git_project}:${TAG_VERSION} --tag ${ARTIFACTORY_URL}/${artifactory_user}/${git_project}:latest
-                        """
-                    }
-                }
-
-                stage('push to hub') {
-                    container('docker-cmd') {
-                        withDockerRegistry([credentialsId: docker_credentials, url: "https://index.docker.io/v1/"]) {
-                            sh "docker push docker.io/${docker_user}/${git_project}:${TAG_VERSION};"
-                            sh "docker push docker.io/${docker_user}/${git_project}:latest;"
+                        dir("${BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
+                            git(changelog: false, credentialsId: git_deploy_user_private_key, poll: false, url: "git@github.com:${git_project_user}/${git_project}.git")
+                            sh("git checkout v${TAG_VERSION}")
                         }
                     }
                 }
 
-                stage('push to quay') {
+                stage("build ${git_project} in dood") {
                     container('docker-cmd') {
-                        withDockerRegistry([credentialsId: quay_credentials, url: "https://quay.io/api/v1/"]) {
-                            sh "docker push quay.io/${quay_user}/${git_project}:${TAG_VERSION}"
-                            sh "docker push quay.io/${quay_user}/${git_project}:latest"
+                        dir("${BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
+                            sh("docker build . -f Dockerfile.multi --tag ${git_project}:${TAG_VERSION} --tag ${git_project}:latest")
                         }
                     }
                 }
 
-                stage('push to artifactory') {
+                stage('push') {
                     container('docker-cmd') {
-                        withDockerRegistry([credentialsId: artifactory_credentials, url: "https://${ARTIFACTORY_URL}/api/v1/"]) {
-                            sh "docker push ${ARTIFACTORY_URL}/${artifactory_user}/${git_project}:${TAG_VERSION}"
-                            sh "docker push ${ARTIFACTORY_URL}/${artifactory_user}/${git_project}:latest"
-                        }
+                        dockerx.images_push_multi_registries(["${git_project}:${TAG_VERSION}", "${git_project}:latest"], multi_credentials)
                     }
                 }
 
                 stage('update release status') {
-                    sh "release_id=\$(curl -H \"Content-Type: application/json\" -H \"Authorization: token ${GIT_TOKEN}\" -X GET https://api.github.com/repos/${git_project_user}/${git_project}/releases/tags/v${TAG_VERSION} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[\"id\"]'); curl -H \"Content-Type: application/json\" -H \"Authorization: token ${GIT_TOKEN}\" -X PATCH https://api.github.com/repos/${git_project_user}/${git_project}/releases/\${release_id} -d '{\"prerelease\": false}'"
+                    container('jnlp') {
+                        github.update_release_status(git_project, git_project_user, "v${TAG_VERSION}", GIT_TOKEN)
+                    }
                 }
             } else {
                 stage('warning') {
                     if (PUBLISHED_BEFORE >= expired) {
                         echo "Tag too old, published before $PUBLISHED_BEFORE minutes."
-                    } else if (AUTO_TAG.startsWith("Autorelease")) {
-                        echo "Autorelease does not trigger this job."
                     } else {
                         echo "${TAG_VERSION} is not release tag."
                     }
