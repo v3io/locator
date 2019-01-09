@@ -84,7 +84,7 @@ spec:
                     stage("build ${git_project} in dood") {
                         container('docker-cmd') {
                             dir("${BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
-                                sh("LOCATOR_TAG=${TAG_VERSION} LOCATOR_REPOSITORY='' make build")
+                                sh("LOCATOR_TAG=${DOCKER_TAG_VERSION} LOCATOR_REPOSITORY='' make build")
                             }
                         }
                     }
