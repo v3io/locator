@@ -33,7 +33,7 @@ spec:
     - name: docker-cmd
       image: docker
       command: [ "/bin/sh", "-c", "--" ]
-      args: [ "while true; do sleep 30; done;" ]
+      args: [ "apk add make; while true; do sleep 30; done;" ]
       volumeMounts:
         - name: docker-sock
           mountPath: /var/run
@@ -62,8 +62,8 @@ spec:
             common.notify_slack {
                 stage('get tag data') {
                     container('jnlp') {
-                        DOCKER_TAG_VERSION = github.get_docker_tag_version(TAG_NAME)
                         TAG_VERSION = github.get_tag_version(TAG_NAME)
+                        DOCKER_TAG_VERSION = github.get_docker_tag_version(TAG_NAME)
                         PUBLISHED_BEFORE = github.get_tag_published_before(git_project, git_project_user, "${TAG_VERSION}", GIT_TOKEN)
 
                         echo "$TAG_VERSION"
@@ -84,7 +84,7 @@ spec:
                     stage("build ${git_project} in dood") {
                         container('docker-cmd') {
                             dir("${BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
-                                sh("docker build . -f Dockerfile --tag ${git_project}:${DOCKER_TAG_VERSION}")
+                                sh("LOCATOR_TAG=${TAG_VERSION} LOCATOR_REPOSITORY='' make build")
                             }
                         }
                     }
