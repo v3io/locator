@@ -2,51 +2,11 @@ label = "${UUID.randomUUID().toString()}"
 BUILD_FOLDER = "/go"
 expired=240
 git_project = "locator"
-git_project_user = "gkirok"
-git_deploy_user_token = "iguazio-dev-git-user-token"
-git_deploy_user_private_key = "iguazio-dev-git-user-private-key"
+git_project_user = "v3io"
+git_deploy_user_token = "iguazio-prod-git-user-token"
+git_deploy_user_private_key = "iguazio-prod-git-user-private-key"
 
-podTemplate(label: "${git_project}-${label}", yaml: """
-apiVersion: v1
-kind: Pod
-metadata:
-  name: "${git_project}-${label}"
-  labels:
-    jenkins/kube-default: "true"
-    app: "jenkins"
-    component: "agent"
-spec:
-  shareProcessNamespace: true
-  containers:
-    - name: jnlp
-      image: jenkins/jnlp-slave
-      resources:
-        limits:
-          cpu: 1
-          memory: 2Gi
-        requests:
-          cpu: 1
-          memory: 2Gi
-      volumeMounts:
-        - name: go-shared
-          mountPath: /go
-    - name: docker-cmd
-      image: docker
-      command: [ "/bin/sh", "-c", "--" ]
-      args: [ "apk add make; while true; do sleep 30; done;" ]
-      volumeMounts:
-        - name: docker-sock
-          mountPath: /var/run
-        - name: go-shared
-          mountPath: /go
-  volumes:
-    - name: docker-sock
-      hostPath:
-          path: /var/run
-    - name: go-shared
-      emptyDir: {}
-"""
-) {
+podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker") {
     node("${git_project}-${label}") {
         withCredentials([
                 string(credentialsId: git_deploy_user_token, variable: 'GIT_TOKEN')
@@ -57,7 +17,7 @@ spec:
                     [$class: 'GitSCMSource',
                      credentialsId: git_deploy_user_private_key,
                      remote: "git@github.com:iguazio/pipelinex.git"])).com.iguazio.pipelinex
-            multi_credentials=[pipelinex.DockerRepoDev.ARTIFACTORY_IGUAZIO, pipelinex.DockerRepoDev.DOCKER_HUB, pipelinex.DockerRepoDev.QUAY_IO]
+            multi_credentials=[pipelinex.DockerRepo.ARTIFACTORY_IGUAZIO, pipelinex.DockerRepo.DOCKER_HUB, pipelinex.DockerRepo.QUAY_IO]
 
             common.notify_slack {
                 stage('get tag data') {
