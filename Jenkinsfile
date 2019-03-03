@@ -17,7 +17,7 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker") {
             multi_credentials = [pipelinex.DockerRepoDev.ARTIFACTORY_IGUAZIO, pipelinex.DockerRepoDev.DOCKER_HUB, pipelinex.DockerRepoDev.QUAY_IO]
 
             common.notify_slack {
-                github.init_project {
+                github.init_project(git_project, git_project_user, GIT_TOKEN) {
                     stage('prepare sources') {
                         container('jnlp') {
                             dir("${BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
