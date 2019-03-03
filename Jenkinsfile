@@ -1,6 +1,4 @@
 label = "${UUID.randomUUID().toString()}"
-TAG_VERSION = ""
-DOCKER_TAG_VERSION = ""
 BUILD_FOLDER = "/go"
 git_project = "locator"
 git_project_user = "gkirok"
@@ -24,7 +22,7 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker") {
                         container('jnlp') {
                             dir("${BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
                                 git(changelog: false, credentialsId: git_deploy_user_private_key, poll: false, url: "git@github.com:${git_project_user}/${git_project}.git")
-                                common.shellc("git checkout ${TAG_VERSION}")
+                                common.shellc("git checkout ${github.TAG_VERSION}")
                             }
                         }
                     }
@@ -32,14 +30,14 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker") {
                     stage("build ${git_project} in dood") {
                         container('docker-cmd') {
                             dir("${BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
-                                common.shellc("LOCATOR_TAG=${DOCKER_TAG_VERSION} LOCATOR_REPOSITORY='' make build")
+                                common.shellc("LOCATOR_TAG=${github.DOCKER_TAG_VERSION} LOCATOR_REPOSITORY='' make build")
                             }
                         }
                     }
 
                     stage('push') {
                         container('docker-cmd') {
-                            dockerx.images_push_multi_registries(["${git_project}:${DOCKER_TAG_VERSION}"], multi_credentials)
+                            dockerx.images_push_multi_registries(["${git_project}:${github.DOCKER_TAG_VERSION}"], multi_credentials)
                         }
                     }
                 }
