@@ -14,8 +14,6 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker") {
             withCredentials([
                     string(credentialsId: git_deploy_user_token, variable: 'GIT_TOKEN')
             ]) {
-                multi_credentials = [pipelinex.DockerRepoDev.ARTIFACTORY_IGUAZIO, pipelinex.DockerRepoDev.DOCKER_HUB, pipelinex.DockerRepoDev.QUAY_IO]
-
                 github.init_project(git_project, git_project_user, GIT_TOKEN) {
                     stage('prepare sources') {
                         container('jnlp') {
@@ -36,7 +34,7 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker") {
 
                     stage('push') {
                         container('docker-cmd') {
-                            dockerx.images_push_multi_registries(["${git_project}:${github.DOCKER_TAG_VERSION}"], multi_credentials)
+                            dockerx.images_push_multi_registries(["${git_project}:${github.DOCKER_TAG_VERSION}"], [pipelinex.DockerRepoDev.ARTIFACTORY_IGUAZIO, pipelinex.DockerRepoDev.DOCKER_HUB, pipelinex.DockerRepoDev.QUAY_IO])
                         }
                     }
                 }
