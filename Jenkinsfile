@@ -14,7 +14,9 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker") {
                     [$class       : 'GitSCMSource',
                      credentialsId: git_deploy_user_private_key,
                      remote       : "git@github.com:iguazio/pipelinex.git"])).com.iguazio.pipelinex
-            multi_credentials = [pipelinex.DockerRepoDev.ARTIFACTORY_IGUAZIO, pipelinex.DockerRepoDev.DOCKER_HUB, pipelinex.DockerRepoDev.QUAY_IO]
+            def TAG_VERSION
+            def DOCKER_TAG_VERSION
+            def multi_credentials = [pipelinex.DockerRepoDev.ARTIFACTORY_IGUAZIO, pipelinex.DockerRepoDev.DOCKER_HUB, pipelinex.DockerRepoDev.QUAY_IO]
 
             common.notify_slack {
                 github.init_project(git_project, git_project_user, GIT_TOKEN) {
