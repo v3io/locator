@@ -6,7 +6,7 @@ git_deploy_user_private_key = "iguazio-prod-git-user-private-key"
 
 podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker") {
     node("${git_project}-${label}") {
-        pipelinex = library(identifier: 'pipelinex@reduction', retriever: modernSCM(
+        pipelinex = library(identifier: 'pipelinex@_test_gallz', retriever: modernSCM(
                 [$class       : 'GitSCMSource',
                  credentialsId: git_deploy_user_private_key,
                  remote       : "git@github.com:iguazio/pipelinex.git"])).com.iguazio.pipelinex
@@ -14,6 +14,19 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker") {
             withCredentials([
                     string(credentialsId: git_deploy_user_token, variable: 'GIT_TOKEN')
             ]) {
+                if(isPRBuild()) {
+                    echo "isPRBuild"
+                    // do something because it is a PR build
+                }
+                if(isTagBuild()) {
+                    echo "isTagBuild"
+                    // do something because it is a tag build
+                }
+                if(!isPRBuild() && !isTagBuild()) {
+                    echo "!isPRBuild() && !isTagBuild()s"
+                    // do something only on branch builds and not on PR or tag build
+                }
+
                 github.init_project(git_project, git_project_user, GIT_TOKEN) {
                     stage('prepare sources') {
                         container('jnlp') {
