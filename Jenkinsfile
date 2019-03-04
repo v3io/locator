@@ -14,18 +14,23 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker") {
             withCredentials([
                     string(credentialsId: git_deploy_user_token, variable: 'GIT_TOKEN')
             ]) {
-                if(isPRBuild()) {
-                    echo "isPRBuild"
-                    // do something because it is a PR build
+                if(env.CHANGE_ID) {
+                    echo "do something because it's a pull request"
+                } else {
+                    echo "not a pull request"
                 }
-                if(isTagBuild()) {
-                    echo "isTagBuild"
-                    // do something because it is a tag build
-                }
-                if(!isPRBuild() && !isTagBuild()) {
-                    echo "!isPRBuild() && !isTagBuild()s"
-                    // do something only on branch builds and not on PR or tag build
-                }
+//                if(isPRBuild()) {
+//                    echo "isPRBuild"
+//                    // do something because it is a PR build
+//                }
+//                if(isTagBuild()) {
+//                    echo "isTagBuild"
+//                    // do something because it is a tag build
+//                }
+//                if(!isPRBuild() && !isTagBuild()) {
+//                    echo "!isPRBuild() && !isTagBuild()s"
+//                    // do something only on branch builds and not on PR or tag build
+//                }
 
                 github.init_project(git_project, git_project_user, GIT_TOKEN) {
                     stage('prepare sources') {
