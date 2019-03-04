@@ -14,6 +14,8 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker") {
             withCredentials([
                     string(credentialsId: git_deploy_user_token, variable: 'GIT_TOKEN')
             ]) {
+                echo "test"
+                echo "${env.GIT_COMMIT}"
                 github.release(git_project, git_project_user, GIT_TOKEN) {
                     stage('prepare sources') {
                         container('jnlp') {
@@ -39,13 +41,13 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker") {
                     }
                 }
 
-                github.pr() {
+                github.pr(git_project, git_project_user, GIT_TOKEN) {
                     stage('prepare sources') {
                         container('jnlp') {
                             echo "THIS IS PR"
                             dir("${github.BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
                                 git(changelog: false, credentialsId: git_deploy_user_private_key, poll: false, url: "git@github.com:${git_project_user}/${git_project}.git")
-                                common.shellc("git checkout ${env.CHANGE_ID}")
+                                common.shellc("git checkout ${github.PR_COMMIT}")
                             }
                         }
                     }
