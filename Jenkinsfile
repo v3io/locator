@@ -4,7 +4,7 @@ git_project_user = "gkirok"
 git_deploy_user_token = "iguazio-prod-git-user-token"
 git_deploy_user_private_key = "iguazio-prod-git-user-private-key"
 
-podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker") {
+podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker-golang") {
     node("${git_project}-${label}") {
         pipelinex = library(identifier: 'pipelinex@_test_gallz', retriever: modernSCM(
                 [$class       : 'GitSCMSource',
@@ -53,9 +53,9 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker") {
                     }
 
                     stage("build ${git_project} in dood") {
-                        container('docker-cmd') {
+                        container('golang') {
                             dir("${github.BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
-                                common.shellc("LOCATOR_TAG=${github.DOCKER_TAG_VERSION} LOCATOR_REPOSITORY='' make lint")
+                                sh("LOCATOR_TAG=pr${env.CHANGE_ID} LOCATOR_REPOSITORY='' make lint")
                             }
                         }
                     }
