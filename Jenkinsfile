@@ -39,9 +39,10 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker") {
                     }
                 }
 
-                github.pr(git_project, git_project_user, GIT_TOKEN) {
+                github.pr() {
                     stage('prepare sources') {
                         container('jnlp') {
+                            echo "THIS IS PR"
                             dir("${github.BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
                                 git(changelog: false, credentialsId: git_deploy_user_private_key, poll: false, url: "git@github.com:${git_project_user}/${git_project}.git")
                                 common.shellc("git checkout ${env.CHANGE_ID}")
