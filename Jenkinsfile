@@ -14,8 +14,7 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker-golang")
             withCredentials([
                     string(credentialsId: git_deploy_user_token, variable: 'GIT_TOKEN')
             ]) {
-                echo "test"
-                echo "${env.GIT_COMMIT}"
+                echo "${GIT_URL}"
                 github.release(git_project, git_project_user, GIT_TOKEN) {
                     stage('prepare sources') {
                         container('jnlp') {
@@ -55,7 +54,7 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker-golang")
                     stage("build ${git_project} in dood") {
                         container('golang') {
                             dir("${github.BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
-                                sh("LOCATOR_TAG=pr${env.CHANGE_ID} LOCATOR_REPOSITORY='' make lint")
+                                common.shellc("LOCATOR_TAG=pr${env.CHANGE_ID} LOCATOR_REPOSITORY='' make lint")
                             }
                         }
                     }
