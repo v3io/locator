@@ -4,9 +4,9 @@ git_project_user = "v3io"
 git_deploy_user_token = "iguazio-prod-git-user-token"
 git_deploy_user_private_key = "iguazio-prod-git-user-private-key"
 
-podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker") {
+podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker-golang") {
     node("${git_project}-${label}") {
-        pipelinex = library(identifier: 'pipelinex@reduction', retriever: modernSCM(
+        pipelinex = library(identifier: 'pipelinex@pr', retriever: modernSCM(
                 [$class       : 'GitSCMSource',
                  credentialsId: git_deploy_user_private_key,
                  remote       : "git@github.com:iguazio/pipelinex.git"])).com.iguazio.pipelinex
@@ -14,7 +14,7 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker") {
             withCredentials([
                     string(credentialsId: git_deploy_user_token, variable: 'GIT_TOKEN')
             ]) {
-                github.init_project(git_project, git_project_user, GIT_TOKEN) {
+                github.release(git_project, git_project_user, GIT_TOKEN) {
                     stage('prepare sources') {
                         container('jnlp') {
                             dir("${github.BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
@@ -35,6 +35,25 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker") {
                     stage('push') {
                         container('docker-cmd') {
                             dockerx.images_push_multi_registries(["${git_project}:${github.DOCKER_TAG_VERSION}"], [pipelinex.DockerRepo.ARTIFACTORY_IGUAZIO, pipelinex.DockerRepo.DOCKER_HUB, pipelinex.DockerRepo.QUAY_IO])
+                        }
+                    }
+                }
+
+                github.pr(git_project, git_project_user, GIT_TOKEN) {
+                    stage('prepare sources') {
+                        container('jnlp') {
+                            dir("${github.BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
+                                git(changelog: false, credentialsId: git_deploy_user_private_key, poll: false, url: "git@github.com:${git_project_user}/${git_project}.git")
+                                common.shellc("git checkout ${github.PR_COMMIT}")
+                            }
+                        }
+                    }
+
+                    stage("build ${git_project} in dood") {
+                        container('golang') {
+                            dir("${github.BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
+                                common.shellc("LOCATOR_TAG=pr${env.CHANGE_ID} LOCATOR_REPOSITORY='' make lint")
+                            }
                         }
                     }
                 }

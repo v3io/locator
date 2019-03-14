@@ -15,8 +15,9 @@ build:
 bin:
 	$(LOCATOR_BUILD_COMMAND)
 
-.PHONY: lint
+.PHONY: ensure-gopath lint
 lint: ensure-gopath
+	@echo $(GOPATH)
 	@echo Installing linters...
 	go get -u gopkg.in/alecthomas/gometalinter.v2
 	@$(GOPATH)/bin/gometalinter.v2 --install
@@ -60,6 +61,6 @@ test:
 
 .PHONY: ensure-gopath
 ensure-gopath:
-	ifndef GOPATH
-		$(error GOPATH must be set)
-	endif
+ifndef GOPATH
+	$(error GOPATH must be set)
+endif
