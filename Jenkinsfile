@@ -6,7 +6,7 @@ git_deploy_user_private_key = "iguazio-prod-git-user-private-key"
 
 podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker-golang") {
     node("${git_project}-${label}") {
-        pipelinex = library(identifier: 'pipelinex@pr', retriever: modernSCM(
+        pipelinex = library(identifier: 'pipelinex@refs', retriever: modernSCM(
                 [$class       : 'GitSCMSource',
                  credentialsId: git_deploy_user_private_key,
                  remote       : "git@github.com:iguazio/pipelinex.git"])).com.iguazio.pipelinex
@@ -14,16 +14,7 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker-golang")
             withCredentials([
                     string(credentialsId: git_deploy_user_token, variable: 'GIT_TOKEN')
             ]) {
-                github.release(git_project, git_project_user, GIT_TOKEN) {
-                    stage('prepare sources') {
-                        container('jnlp') {
-                            dir("${github.BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
-                                git(changelog: false, credentialsId: git_deploy_user_private_key, poll: false, url: "git@github.com:${git_project_user}/${git_project}.git")
-                                common.shellc("git checkout ${github.TAG_VERSION}")
-                            }
-                        }
-                    }
-
+                github.release(git_deploy_user, git_project, git_project_user, git_project_upstream_user, true, GIT_TOKEN) {
                     stage("build ${git_project} in dood") {
                         container('docker-cmd') {
                             dir("${github.BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
@@ -39,16 +30,7 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker-golang")
                     }
                 }
 
-                github.pr(git_project, git_project_user, GIT_TOKEN) {
-                    stage('prepare sources') {
-                        container('jnlp') {
-                            dir("${github.BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
-                                git(changelog: false, credentialsId: git_deploy_user_private_key, poll: false, url: "git@github.com:${git_project_user}/${git_project}.git")
-                                common.shellc("git checkout ${github.PR_COMMIT}")
-                            }
-                        }
-                    }
-
+                github.pr(git_deploy_user, git_project, git_project_user, git_project_upstream_user, true, GIT_TOKEN) {
                     stage("build ${git_project} in dood") {
                         container('golang') {
                             dir("${github.BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
