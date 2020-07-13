@@ -61,6 +61,6 @@ test:
 
 .PHONY: ensure-gopath
 ensure-gopath:
-ifndef GOPATH
-	$(error GOPATH must be set)
-endif
+	ifndef GOPATH
+		$(error GOPATH must be set)
+	endif

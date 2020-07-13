@@ -24,14 +24,12 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker-golang")
                             }
                         }
                     }
-
                     stage('push') {
                         container('docker-cmd') {
                             dockerx.images_push_multi_registries(["${git_project}:${github.DOCKER_TAG_VERSION}"], [pipelinex.DockerRepo.ARTIFACTORY_IGUAZIO, pipelinex.DockerRepo.DOCKER_HUB, pipelinex.DockerRepo.QUAY_IO, pipelinex.DockerRepo.GCR_IO])
                         }
                     }
                 }
-
                 github.pr(git_deploy_user, git_project, git_project_user, git_project_upstream_user, true, GIT_TOKEN) {
                     stage("build ${git_project} in dood") {
                         container('golang') {
