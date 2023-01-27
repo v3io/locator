@@ -12,31 +12,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+name: CI
 
-LABEL ?= unstable
-REPOSITORY ?= gcr.io/iguazio
-IMAGE = $(REPOSITORY)/locator:$(LABEL)
+on:
+  pull_request:
+    branches:
+    - development
+    - '[0-9]+.[0-9]+.x'
 
-.PHONY: build
-build:
-	@docker build \
-		--file cmd/locator/Dockerfile \
-		--tag=$(IMAGE) \
-		.
+  push:
+    branches:
+    - development
+    - master
 
-.PHONY: push
-push:
-	docker push $(IMAGE)
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
 
-.PHONY: lint
-lint:
-	./hack/lint/install.sh
-	./hack/lint/run.sh
+    - uses: actions/setup-go@v3
+      with:
+        cache: true
+        go-version-file: "go.mod"
 
-.PHONY: fmt
-fmt:
-	@go fmt $(shell go list ./... | grep -v /vendor/)
+    - name: Run lint
+      run: make lint
 
-.PHONY: test
-test:
-	go test -p1 -v ./pkg/...
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Run build
+      run: make build

@@ -12,18 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package locator
+package main
 
-type Config struct {
-	Port      int
-	Namespace string
-}
+import (
+	"flag"
+	"fmt"
 
-func (c *Config) Defaults() {
-	if c.Port == 0 {
-		c.Port = 8080
-	}
-	if c.Namespace == "" {
-		c.Namespace = "default"
+	"github.com/v3io/locator/pkg/locator"
+)
+
+func main() {
+	config := &locator.Config{}
+	flag.IntVar(&config.Port, "port", 8080, "Listen port (default: 8080)")
+	flag.StringVar(&config.Namespace, "namespace", "", "Namespace to monitor")
+	flag.Parse()
+
+	if err := locator.RunServer(config); err != nil {
+		fmt.Println("Error while serving registry", err)
 	}
 }
