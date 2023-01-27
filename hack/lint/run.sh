@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Copyright 2019 Iguazio
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,30 +14,21 @@
 # limitations under the License.
 #
 
-LABEL ?= unstable
-REPOSITORY ?= gcr.io/iguazio
-IMAGE = $(REPOSITORY)/locator:$(LABEL)
+set -e
 
-.PHONY: build
-build:
-	@docker build \
-		--file cmd/locator/Dockerfile \
-		--tag=$(IMAGE) \
-		.
+OS_NAME=$(uname -s)
+OS_NAME_LOWERCASE=$(echo "${OS_NAME}" | tr "[:upper:]" "[:lower:]")
 
-.PHONY: push
-push:
-	docker push $(IMAGE)
+if [[ -z "${BIN_DIR}" ]]; then
+  BIN_DIR=$(pwd)/.bin
+fi
 
-.PHONY: lint
-lint:
-	./hack/lint/install.sh
-	./hack/lint/run.sh
+echo Verifying imports...
 
-.PHONY: fmt
-fmt:
-	@go fmt $(shell go list ./... | grep -v /vendor/)
+"${BIN_DIR}"/impi \
+  --local github.com/v3io/locator/ \
+  --scheme stdLocalThirdParty \
+  ./cmd/... ./pkg/...
 
-.PHONY: test
-test:
-	go test -p1 -v ./pkg/...
+echo "Linting @$(pwd)..."
+"${BIN_DIR}"/golangci-lint run -v --max-same-issues=100

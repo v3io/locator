@@ -1,3 +1,17 @@
+// Copyright 2019 Iguazio
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package locator
 
 import (
@@ -5,10 +19,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"gopkg.in/gin-gonic/gin.v1"
-
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -27,7 +41,7 @@ func (s *server) initDefaults() {
 }
 
 func (s *server) registerMetrics() {
-	prometheus.DefaultRegisterer.Register(prometheus.NewGoCollector()) // nolint: errcheck
+	prometheus.DefaultRegisterer.Register(collectors.NewGoCollector()) // nolint: errcheck
 	s.engine.Any("/metrics", gin.WrapH(
 		promhttp.HandlerFor(
 			prometheus.DefaultGatherer, promhttp.HandlerOpts{})))
@@ -42,17 +56,21 @@ func (s *server) registerHandlers() {
 		for key, value := range query {
 			selector = append(selector, fmt.Sprintf("%s=%s", key, value))
 		}
-		pods, err := s.clientSet.CoreV1().Pods(s.config.Namespace).List(v1.ListOptions{
-			LabelSelector: strings.Join(selector, ","),
-		})
+		pods, err := s.clientSet.CoreV1().Pods(s.config.Namespace).List(c,
+			v1.ListOptions{
+				LabelSelector: strings.Join(selector, ","),
+			})
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err) // nolint: errcheck
-		} else {
-			for _, pod := range pods.Items {
-				if pod.Status.HostIP == key {
-					c.String(http.StatusOK, pod.Status.PodIP)
-					return
-				}
+			return
+		}
+
+		// find the pod with the matching host IP
+		// and return its pod IP
+		for _, pod := range pods.Items {
+			if pod.Status.HostIP == key {
+				c.String(http.StatusOK, pod.Status.PodIP)
+				return
 			}
 		}
 		c.String(http.StatusNoContent, "")
