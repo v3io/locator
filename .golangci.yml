@@ -1,7 +1,6 @@
 linters:
   disable-all: true
   enable:
-    - deadcode
     - goconst
     - gofmt
     - revive
@@ -10,17 +9,15 @@ linters:
     - misspell
     - staticcheck
     - unconvert
-    - varcheck
     - vet
     - vetshadow
     - errcheck
     - govet
-    - structcheck
     - typecheck
     - gocritic
+    - unused
 
 run:
-
   # timeout for analysis
   timeout: 5m
 
@@ -28,9 +25,16 @@ run:
     - hack
 
 linters-settings:
+  gci:
+    sections:
+      - standard
+      - prefix(github.com/v3io/locator)
+      - default
+      - blank
+      - dot
+
   revive:
     rules:
-
       # avoid  errorf: should replace errors.New(fmt.Sprintf(...)) with fmt.Errorf(...)  messages
       - name: errorf
         disabled: true
@@ -40,14 +44,12 @@ linters-settings:
       - commentFormatting # we dont want to enforce space before the comment text
 
 issues:
-
   # List of regexps of issue texts to exclude
   exclude:
     - "comment on"
     - "error should be the last"
 
   exclude-rules:
-
     # list of excluded linters applied on test files
     - path: _test\.go
       linters:

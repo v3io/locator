@@ -23,12 +23,5 @@ if [[ -z "${BIN_DIR}" ]]; then
   BIN_DIR=$(pwd)/.bin
 fi
 
-echo Verifying imports...
-
-"${BIN_DIR}"/impi \
-  --local github.com/v3io/locator/ \
-  --scheme stdLocalThirdParty \
-  ./cmd/... ./pkg/...
-
 echo "Linting @$(pwd)..."
 "${BIN_DIR}"/golangci-lint run -v --max-same-issues=100

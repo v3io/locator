@@ -17,34 +17,33 @@ name: CI
 on:
   pull_request:
     branches:
-    - development
-    - '[0-9]+.[0-9]+.x'
+      - development
+      - "[0-9]+.[0-9]+.x"
 
   push:
     branches:
-    - development
-    - master
+      - development
+      - master
 
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-    - uses: actions/setup-go@v3
-      with:
-        cache: true
-        go-version-file: "go.mod"
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
 
-    - name: Run lint
-      run: make lint
+      - name: Run lint
+        run: make lint
 
   build:
     name: Build
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-    - name: Run build
-      run: make build
+      - name: Run build
+        run: make build
