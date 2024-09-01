@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-FROM gcr.io/iguazio/golang:1.19 as builder
+FROM gcr.io/iguazio/golang:1.21 AS builder
 
 # copy source tree
 WORKDIR /app
@@ -33,12 +33,9 @@ RUN GOOS=linux \
 # Output stage: Copies binary to an alpine based image
 #
 
-FROM debian:stretch-slim
+FROM gcr.io/iguazio/alpine:3.20
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk -U upgrade && apk --no-cache add ca-certificates
 
 # copy app binary from build stage
 COPY --from=builder /app/locatorctl /usr/local/bin

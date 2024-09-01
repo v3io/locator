@@ -32,9 +32,8 @@ env:
 jobs:
   release:
     name: Release Docker Images
-    runs-on: [ self-hosted, Linux ]
+    runs-on: [self-hosted, Linux]
     steps:
-
       - name: Set unstable
         if: github.event_name == 'push'
         run: |
