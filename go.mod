@@ -2,8 +2,6 @@ module github.com/v3io/locator
 
 go 1.23.0
 
-toolchain go1.24.1
-
 require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/prometheus/client_golang v1.20.2
