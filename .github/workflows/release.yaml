@@ -24,6 +24,9 @@ on:
     branches:
       - development
 
+permissions:
+  contents: read
+
 env:
   RELEASE_REGISTRY: gcr.io
   RELEASE_REPO: iguazio
@@ -45,7 +48,7 @@ jobs:
           echo "LABEL=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
           cat $GITHUB_ENV
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Login to artifactory
         run: docker login -u ${{ secrets.ARTIFACTORY_DOCKER_USERNAME }} -p ${{ secrets.ARTIFACTORY_DOCKER_PASSWORD }} ${{ env.ARTIFACTORY_REGISTRY }}
